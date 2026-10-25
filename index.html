@@ -2,7 +2,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap">
 <style>
-/* Layout: toy-box — hold | well | next+stats, stacking to a top strip + touch pad on phones. Deliberately single bright pastel theme. */
+/* Layout: toy-box — hold | well | next+stats, stacking to a top strip + touch pad on phones. Three selectable pastel/night themes, switched via [data-theme] on the root. */
 :root {
   --bg: #fdeef4;
   --dots: #f9d6e4;
@@ -11,10 +11,44 @@
   --fg: #5a3d55;
   --muted: #a07f98;
   --accent: #ff7aa8;
+  --accent-shadow: #e05a8c;
   --well: #f3f8ff;
+  --grid-rgb: 120,150,210;
+  --flash-rgb: 255,122,168;
+  --overlay-bg: rgba(255,255,255,0.86);
   --f-display: "Jua", "Rubik Mono One", system-ui, sans-serif;
   --f-body: "Noto Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
   --f-data: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+:root[data-theme="meadow"] {
+  --bg: #16261d;
+  --dots: #1f3828;
+  --panel: #22392c;
+  --line: #3b5c42;
+  --fg: #eaf3e6;
+  --muted: #94b89a;
+  --accent: #ffd76a;
+  --accent-shadow: #c99a2e;
+  --well: #0f1e15;
+  --grid-rgb: 190,255,190;
+  --flash-rgb: 255,223,120;
+  --overlay-bg: rgba(16,28,19,0.88);
+  color-scheme: dark;
+}
+:root[data-theme="sea"] {
+  --bg: #e8f6fb;
+  --dots: #cdeaf5;
+  --panel: #ffffff;
+  --line: #bbe2f1;
+  --fg: #123a52;
+  --muted: #5f93a9;
+  --accent: #26b1e0;
+  --accent-shadow: #1689b0;
+  --well: #eaf9ff;
+  --grid-rgb: 40,150,195;
+  --flash-rgb: 70,205,255;
+  --overlay-bg: rgba(255,255,255,0.88);
   color-scheme: light;
 }
 [hidden] { display: none !important; }
@@ -79,7 +113,7 @@ body {
   position: absolute; inset: 4px;
   border-radius: 10px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-  background: rgba(255, 255, 255, 0.86);
+  background: var(--overlay-bg);
   text-align: center; padding: 16px;
 }
 .overlay h1 {
@@ -112,6 +146,20 @@ body {
   border-color: var(--accent);
 }
 .diffBtn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.themeLabel { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; margin: 2px 0 -6px; }
+.themeRow { display: flex; gap: 10px; }
+.themeBtn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: none; border: 0; cursor: pointer; padding: 2px;
+  font-family: var(--f-body); font-size: 11px; color: var(--muted);
+}
+.swatch {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid var(--line); box-sizing: border-box;
+}
+.themeBtn.active .swatch { border-color: var(--fg); box-shadow: 0 0 0 2px var(--accent); }
+.themeBtn.active { color: var(--fg); font-weight: 700; }
+.themeBtn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 button.primary {
   font-family: var(--f-display);
   font-size: 18px;
@@ -120,7 +168,7 @@ button.primary {
   border: 0;
   border-radius: 999px;
   padding: 12px 28px;
-  box-shadow: 0 4px 0 #e05a8c;
+  box-shadow: 0 4px 0 var(--accent-shadow);
   cursor: pointer;
 }
 button.primary:hover { filter: brightness(1.08); }
@@ -191,6 +239,20 @@ button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
         <button type="button" class="diffBtn" data-diff="easy">쉬움</button>
         <button type="button" class="diffBtn" data-diff="normal">보통</button>
         <button type="button" class="diffBtn" data-diff="hard">어려움</button>
+      </div>
+      <div id="themeGroup">
+        <p class="themeLabel">테마</p>
+        <div class="themeRow" id="themeRow">
+          <button type="button" class="themeBtn" data-theme="pink">
+            <span class="swatch" style="background:linear-gradient(135deg,#fdeef4 50%,#ff7aa8 50%)"></span>핑크 하우스
+          </button>
+          <button type="button" class="themeBtn" data-theme="meadow">
+            <span class="swatch" style="background:linear-gradient(135deg,#16261d 50%,#ffd76a 50%)"></span>다크 메도우
+          </button>
+          <button type="button" class="themeBtn" data-theme="sea">
+            <span class="swatch" style="background:linear-gradient(135deg,#e8f6fb 50%,#26b1e0 50%)"></span>블루 씨
+          </button>
+        </div>
       </div>
       <button class="primary" id="ovBtn" type="button">시작하기</button>
     </div>
@@ -399,6 +461,7 @@ button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
     $("ovFinal").hidden = !final;
     $("ovFinal").textContent = final || "";
     $("diffRow").hidden = !showDiff;
+    $("themeGroup").hidden = !showDiff;
     overlay.hidden = false;
   }
   function setDifficulty(d) {
@@ -411,6 +474,32 @@ button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
     b.addEventListener("click", () => setDifficulty(b.dataset.diff));
   });
   setDifficulty(difficulty);
+
+  const THEMES = ["pink", "meadow", "sea"];
+  let theme = "pink";
+  try { theme = localStorage.getItem("tetris-theme") || "pink"; } catch (e) {}
+  if (!THEMES.includes(theme)) theme = "pink";
+  let themeVars = {};
+  function readThemeVars() {
+    const cs = getComputedStyle(document.documentElement);
+    themeVars = {
+      well: cs.getPropertyValue("--well").trim(),
+      grid: cs.getPropertyValue("--grid-rgb").trim(),
+      flash: cs.getPropertyValue("--flash-rgb").trim()
+    };
+  }
+  function setTheme(t) {
+    if (!THEMES.includes(t)) return;
+    theme = t;
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem("tetris-theme", t); } catch (e) {}
+    document.querySelectorAll(".themeBtn").forEach(b => b.classList.toggle("active", b.dataset.theme === t));
+    readThemeVars();
+  }
+  document.querySelectorAll(".themeBtn").forEach(b => {
+    b.addEventListener("click", () => setTheme(b.dataset.theme));
+  });
+  setTheme(theme);
   $("ovBtn").addEventListener("click", () => {
     if (state === "pause") togglePause(); else start();
     $("ovBtn").blur();
@@ -531,8 +620,8 @@ button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
   }
   function draw() {
     const W = COLS * cell, H = ROWS * cell;
-    bctx.fillStyle = "#f3f8ff"; bctx.fillRect(0, 0, W, H);
-    bctx.strokeStyle = "rgba(120,150,210,0.14)"; bctx.lineWidth = 1;
+    bctx.fillStyle = themeVars.well || "#f3f8ff"; bctx.fillRect(0, 0, W, H);
+    bctx.strokeStyle = `rgba(${themeVars.grid || "120,150,210"},0.14)`; bctx.lineWidth = 1;
     bctx.beginPath();
     for (let c = 1; c < COLS; c++) { bctx.moveTo(c * cell + 0.5, 0); bctx.lineTo(c * cell + 0.5, H); }
     for (let r = 1; r < ROWS; r++) { bctx.moveTo(0, r * cell + 0.5); bctx.lineTo(W, r * cell + 0.5); }
@@ -544,7 +633,7 @@ button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
       if (!t) continue;
       if (flash.includes(r)) {
         const k = 1 - clearing.t / CLEAR_MS;
-        bctx.fillStyle = `rgba(255,122,168,${0.25 + 0.6 * k})`;
+        bctx.fillStyle = `rgba(${themeVars.flash || "255,122,168"},${0.25 + 0.6 * k})`;
         bctx.fillRect(c * cell, r * cell, cell, cell);
       } else block(bctx, c * cell, r * cell, cell, t);
     }
